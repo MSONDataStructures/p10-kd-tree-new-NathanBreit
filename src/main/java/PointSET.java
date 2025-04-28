@@ -33,8 +33,11 @@ public class PointSET {
     /**
      * Constructs an empty set of points in the unit square.
      */
+    private int size;
+    private TreeSet<Point2D> points = new TreeSet<>();
     public PointSET() {
         // TODO: your code here
+        size = 0;
     }
 
     /**
@@ -43,7 +46,7 @@ public class PointSET {
      */
     public boolean isEmpty() {
         // TODO: your code here
-        return false;
+        return points.isEmpty();
     }
 
     /**
@@ -52,7 +55,7 @@ public class PointSET {
      */
     public int size() {
         // TODO: your code here
-        return 0;
+        return size;
     }
 
     /**
@@ -62,6 +65,15 @@ public class PointSET {
      */
     public void insert(Point2D p) {
         // TODO: your code here
+        if (p == null) {
+            throw new IllegalArgumentException("Argument is Null");
+
+        }
+        if (!points.contains(p)) {
+            points.add(p);
+            size++;
+        }
+
     }
 
     /**
@@ -72,7 +84,10 @@ public class PointSET {
      */
     public boolean contains(Point2D p) {
         // TODO: your code here
-        return false;
+        if (p == null) {
+            throw new IllegalArgumentException("Argument is Null");
+        }
+        return points.contains(p);
     }
 
     /**
@@ -92,7 +107,17 @@ public class PointSET {
      */
     public Iterable<Point2D> range(RectHV rect) {
         // TODO: your code here
-        return new ArrayList<>();
+        if (rect == null) {
+            throw new IllegalArgumentException("Argument is Null");
+        }
+
+        ArrayList<Point2D> returnArray = new ArrayList<>();
+        for (Point2D p : points) {
+            if (rect.contains(p)) {
+                returnArray.add(p);
+            }
+        }
+        return returnArray;
     }
 
     /**
@@ -103,7 +128,21 @@ public class PointSET {
      */
     public Point2D nearest(Point2D p) {
         // TODO: your code here
-        return new Point2D(0.0, 0.0);
+        if (p == null) {
+            throw new IllegalArgumentException("Argument is Null");
+        }
+
+        double closestDistance = Double.MAX_VALUE;
+        Point2D returnPoint = null;
+
+        for (Point2D point : points) {
+            double distance = p.distanceTo(point);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                returnPoint = point;
+            }
+        }
+        return returnPoint;
     }
 
     /**

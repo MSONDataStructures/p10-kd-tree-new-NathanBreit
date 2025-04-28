@@ -44,8 +44,16 @@ public class KdTree {
     /**
      * Constructs an empty set of points in the unit square.
      */
+    //simple fields to keep as I go
+    private int size;
+    private Node root;
+
     public KdTree() {
         // TODO: your code here
+        // Make Tree Empty to Start
+        size = 0;
+        root = null;
+
     }
 
     /**
@@ -54,7 +62,7 @@ public class KdTree {
      */
     public boolean isEmpty() {
         // TODO: your code here
-        return false;
+        return size == 0;
     }
 
     /**
@@ -63,7 +71,7 @@ public class KdTree {
      */
     public int size() {
         // TODO: your code here
-        return 0;
+        return size;
     }
 
     /**
@@ -73,8 +81,50 @@ public class KdTree {
      */
     public void insert(Point2D p) {
         // TODO: your code here
+        if (p == null) throw new IllegalArgumentException();
+
+        if (root == null) {
+            root = new Node();
+            root.p = p;
+            root.rect = new RectHV(0, 0, 1, 1);
+            size++;
+        }
+        // used for insertion. carries current location (to be traversed if not null), Point
+        // (to be created into a Node and added once at null location), the rectangle
+        // corresponding to the current Node (will be updated every recursion
+        // by checking x-value of point if vertical or y-value of point if horizontal),
+        // and depth to determine whether split is vertical vs. horizontal
+
+        //* odd value for layer == vertical, even value == horizontal
+        root = insertHelper(root, p, root.rect, 1);
     }
 
+    private Node insertHelper(Node current, Point2D p, RectHV rect, int layer) {
+        if (current == null) {
+            Node newNode = new Node();
+            newNode.p = p;
+            newNode.rect = rect;
+            size++;
+            return newNode;
+        }
+
+        // if vertical
+        if (layer % 2 == 1) {
+            // if go left
+                    // how do I change the rect values?
+            current.lb = insertHelper(current.lb, p, rect, layer + 1);
+            // if go right
+            current.rt = insertHelper(current.rt, p, rect, layer + 1);
+        }
+
+        // if horizontal
+        if (layer % 2 == 0) {
+            // if go down
+            current.lb = insertHelper(current.lb, p, rect, layer + 1);
+            // if go up
+            current.rt = insertHelper(current.rt, p, rect, layer + 1);
+        }
+    }
     /**
      * Returns true if the set contains point p.
      * @param p the point to be checked for
