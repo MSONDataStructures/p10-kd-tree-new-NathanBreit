@@ -198,10 +198,61 @@ public class KdTree {
      * @throws IllegalArgumentException if rect is null
      */
     public Iterable<Point2D> range(RectHV rect) {
+
         // TODO: your code here
-        return new ArrayList<>();
+        if (rect == null) throw new IllegalArgumentException();
+
+        ArrayList<Point2D> returnList = new ArrayList<>();
+        rangeHelper(rect, root, 1, returnList);
+        return returnList;
     }
 
+    private void rangeHelper(RectHV targetRect, Node current, int layer, ArrayList<Point2D> returnList) {
+        //general if statement of success
+        if (current == null) {
+            return;
+        }
+
+        // specific if statement of success. only add point if it is contained in the rectangle target
+        if (targetRect.contains(current.p)) {
+            returnList.add(current.p);
+        }
+
+        //continue recursion based on the fact that any point left or down of the split
+        // created by current MUST be either less than or equal to the subsequent x of y
+        // value of the split and vice versa.
+        // if vertical
+        if (layer % 2 == 1) {
+            // if go left
+            if (targetRect.xmin() <= current.p.x()) {
+
+                // recurse left
+                rangeHelper(targetRect, current.lb, layer + 1, returnList);
+            }
+            // if go right
+            if (targetRect.xmax() >= current.p.x()) {
+
+                //recurse right
+                rangeHelper(targetRect, current.rt, layer + 1, returnList);
+            }
+        }
+
+        // if horizontal
+        if (layer % 2 == 0) {
+            // if go down
+            if (targetRect.ymin() <= current.p.y()) {
+
+                // recurse down
+                rangeHelper(targetRect, current.lb, layer + 1, returnList);
+            }
+            // if go up
+            if (targetRect.ymax() >= current.p.y()) {
+
+                // recurse with up
+                rangeHelper(targetRect, current.rt, layer + 1, returnList);
+            }
+        }
+    }
     /**
      * Returns a nearest neighbor in the set to point p; null if the set is empty.
      * @param p the point to be checked
@@ -210,8 +261,63 @@ public class KdTree {
      */
     public Point2D nearest(Point2D p) {
         // TODO: your code here
-        return new Point2D(0.0, 0.0);
+        if (p == null) throw new IllegalArgumentException("argument is null");
+
+        double closestDistance = Double.POSITIVE_INFINITY;
+        Point2D nearest = null;
+
+        return nearestHelper(p, root, 1, closestDistance, nearest);
     }
+
+    private Point2D nearestHelper(Point2D p, Node current, int layer, double closestDistance, Point2D nearest) {
+        // if statement of success
+        if (current == null) return nearest;
+
+        // specific if statement of success. if current is closer than closest
+        // found so far then set it equal to closest
+        if (current.p.distanceTo(p) < closestDistance) {
+            closestDistance = current.p.distanceTo(p);
+            nearest = current.p;
+        }
+
+        // begin recursion based on the idea that any point in the subtrees MUST be
+        // contained inside the rectangle, so if there is no possible point in
+        // the rectangle of said subtree closer than nearest we don't have to look there.
+        // if vertical
+        if (layer % 2 == 1) {
+            // if go left
+            if (!(current.lb == null) && current.lb.rect.distanceTo(p) < closestDistance) {
+                // recurse left
+                nearest = nearestHelper(p, current.lb, layer + 1, closestDistance, nearest);
+            }
+            // if go right
+            if (!(current.rt == null) && current.rt.rect.distanceTo(p) < closestDistance) {
+
+                //recurse right
+                nearest = nearestHelper(p, current.rt, layer + 1, closestDistance, nearest);
+            }
+        }
+
+        // if horizontal
+        if (layer % 2 == 0) {
+            // if go down
+            if (!(current.lb == null) && current.lb.rect.distanceTo(p) < closestDistance) {
+
+                // recurse down
+                nearest = nearestHelper(p, current.lb, layer + 1, closestDistance, nearest);
+            }
+            // if go up
+            if (!(current.rt == null) && current.rt.rect.distanceTo(p) < closestDistance) {
+
+                // recurse with up
+                nearest = nearestHelper(p, current.rt, layer + 1, closestDistance, nearest);
+            }
+        }
+
+        return nearest;
+    }
+
+
 
     /**
      * Optional method for your testing.
@@ -225,11 +331,53 @@ public class KdTree {
         kdTree.insert(new Point2D(0.4, 0.7));
         kdTree.insert(new Point2D(0.9, 0.6));
 
+        // contains test cases
         kdTree.Print(kdTree.root);
+        // true
         System.out.println(kdTree.contains(new Point2D(0.9, 0.6)));
+        // false
         System.out.println(kdTree.contains(new Point2D(0.5, 0.5)));
+        // true
         System.out.println(kdTree.contains(new Point2D(0.5, 0.4)));
+        // true
         System.out.println(kdTree.contains(new Point2D(0.7, 0.2)));
+
+
+        // Range test cases
+        RectHV fullRange = new RectHV(0.0, 0.0, 1.0, 1.0);
+        System.out.println("range test for all points");
+        for (Point2D p : kdTree.range(fullRange)) {
+            System.out.println(p);
+        }
+        RectHV lowerLeft = new RectHV(0.0, 0.0, 0.5, 0.5);
+        System.out.println("range test for points (.5, .4) and (.2, .3)");
+        for (Point2D p : kdTree.range(lowerLeft)) {
+            System.out.println(p);
+        }
+        RectHV emptyRange = new RectHV(0.0, 0.8, 0.2, 1.0);
+        System.out.println("range test for no points");
+        for (Point2D p : kdTree.range(emptyRange)) {
+            System.out.println(p);
+        }
+        RectHV onePoint = new RectHV(0.7, 0.2, 0.7, 0.2);
+        System.out.println("range test for on border point (.7, .2)");
+        for (Point2D p : kdTree.range(onePoint)) {
+            System.out.println(p);
+        }
+
+        // nearest test cases
+        System.out.println("Nearest Tests");
+        System.out.println(kdTree.nearest(new Point2D(.2, .7)));
+        // answer = (.4, .7)
+        System.out.println(kdTree.nearest(new Point2D(.9, .9)));
+        // answer = (.9, .6)
+        System.out.println(kdTree.nearest(new Point2D(.5, .4)));
+        // answer = (.5, .4)
+        System.out.println(kdTree.nearest(new Point2D(0.4, .4)));
+        // answer (.5, .4)
+        System.out.println(kdTree.nearest(new Point2D(0.7, .1)));
+        // answer (.7, .2)
+
     }
 
     private void Print(Node node) {
@@ -239,3 +387,4 @@ public class KdTree {
         Print(node.rt);
     }
 }
+// we gucci. thanks Mr. Young for the class.
